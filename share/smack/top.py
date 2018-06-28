@@ -175,6 +175,9 @@ def arguments():
   translate_group.add_argument('--entry-points', metavar='PROC', nargs='+',
     default=['main'], help='specify top-level procedures [default: %(default)s]')
 
+  translate_group.add_argument('--back-entry-points', metavar='PROC', nargs='+',
+    default=['main'], help='specify top-level procedures [default: %(default)s]')
+
   translate_group.add_argument('--memory-safety', action='store_true', default=False,
     help='enable memory safety checks')
 
@@ -345,7 +348,7 @@ def llvm_to_bpl(args):
   transform_bpl(args)
 
 def procedure_annotation(name, args):
-  if name in args.entry_points:
+  if name in args.back_entry_points:
     return "{:entrypoint}"
   elif args.modular and re.match("|".join(inlined_procedures()).replace("$","\$"), name):
     return "{:inline 1}"
