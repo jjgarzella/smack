@@ -5,6 +5,7 @@ import subprocess
 import time
 from shutil import copyfile
 import smack.top
+import smack.frontend
 import filters
 from toSVCOMPformat import smackJsonToXmlGraph
 from random_testing import random_test
@@ -60,7 +61,12 @@ def svcomp_frontend(input_file, args):
     # Ensure clang runs the preprocessor, even with .i extension.
     args.clang_options += " -x c"
 
-  smack.top.clang_frontend(args)
+  bc = smack.frontend.clang_frontend(args.input_files[0], args)
+
+  # run with no extra smack libraries
+  libs = set()
+
+  smack.top.link_bc_files([bc],libs,args)
 
 def svcomp_check_property(args):
   # Check if property is vanilla reachability, and return unknown otherwise
@@ -281,8 +287,8 @@ def verify_bpl_svcomp(args):
     heurTrace += "BusyBox memory safety benchmark detected. Setting loop unroll bar to 4.\n"
     loopUnrollBar = 4
   elif args.integer_overflow and "__main($i0" in bpl:
-    heurTrace += "BusyBox overflows benchmark detected. Setting loop unroll bar to 4.\n"
-    loopUnrollBar = 4
+    heurTrace += "BusyBox overflows benchmark detected. Setting loop unroll bar to 11.\n"
+    loopUnrollBar = 11
   elif args.integer_overflow and ("jain" in bpl or "TerminatorRec02" in bpl or "NonTerminationSimple" in bpl):
     heurTrace += "Infinite loop in overflow benchmark. Setting loop unroll bar to INT_MAX.\n"
     loopUnrollBar = 2**31 - 1

@@ -477,8 +477,7 @@ void SmackInstGenerator::visitStoreInst(llvm::StoreInst& si) {
   if (SmackOptions::SourceLocSymbols) {
     if (const llvm::GlobalVariable* G = llvm::dyn_cast<const llvm::GlobalVariable>(P)) {
       if (const llvm::PointerType* t = llvm::dyn_cast<const llvm::PointerType>(G->getType())) {
-        if (!t->getElementType()->isPointerTy()) {
-          assert(G->hasName() && "Expected named global variable.");
+        if (!t->getElementType()->isPointerTy() && G->hasName()) {
           emit(recordProcedureCall(V, {Attr::attr("cexpr", G->getName().str())}));
         }
       }
@@ -594,6 +593,13 @@ void SmackInstGenerator::visitCallInst(llvm::CallInst& ci) {
     WARN("ignoring llvm.debug call.");
     emit(Stmt::skip());
 
+  } else if (name.find("llvm.expect.") != std::string::npos) {
+    // The llvm.expect.* function has two arguments: a value v and an expected
+    // value that is supposed to be used by optimizers.
+    // Semantically, this function simply returns the value v.
+    Value* val = ci.getArgOperand(0);
+    emit(Stmt::assign(rep->expr(&ci), rep->expr(val)));
+    
   } else if (name.find(Naming::VALUE_PROC) != std::string::npos) {
     emit(rep->valueAnnotation(ci));
 

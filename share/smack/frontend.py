@@ -1,7 +1,6 @@
 import os
 import sys
 from utils import temporary_file, try_command
-from svcomp.utils import svcomp_frontend
 
 def languages():
   """A dictionary of languages per file extension."""
@@ -22,10 +21,15 @@ def languages():
     'f90'    : 'fortran',
     'f95'    : 'fortran',
     'f03'    : 'fortran',
+    'rs'     : 'rust',
   }
 
 def frontends():
   """A dictionary of front-ends per language."""
+
+  # Avoid circular import
+  from svcomp.utils import svcomp_frontend
+
   return {
     'c'        : clang_frontend,
     'cxx'      : clang_plusplus_frontend,
@@ -36,6 +40,7 @@ def frontends():
     'llvm'     : llvm_frontend,
     'boogie'   : boogie_frontend,
     'fortran'  : fortran_frontend,
+    'rust'     : rust_frontend,
   }
 
 def extra_libs():
@@ -56,10 +61,6 @@ def smack_header_path():
 def smack_headers(args):
   paths = []
   paths.append(smack_header_path())
-  if args.memory_safety or args.integer_overflow:
-    paths.append(os.path.join(smack_header_path(), 'string'))
-  if args.float:
-    paths.append(os.path.join(smack_header_path(), 'math'))
   return paths
 
 def smack_lib():
@@ -205,12 +206,34 @@ def json_compilation_database_frontend(input_file, args):
 
   llvm_to_bpl(args)
 
+def rust_frontend(input_file, args):
+  """Generate Boogie code from Rust programming language source(s)."""
+  compile_command = ['rustc', '-A', 'unused-imports', '-C', 'opt-level=0',
+                     '-C', 'no-prepopulate-passes', '-g', '--emit=llvm-bc',
+                     '--cfg', 'verifier="smack"']
+  
+  # This links in the Rust SMACK library. This is needed due to the way rustc
+  # finds a programs libraries.
+  try:
+    abs_path = os.path.dirname(os.path.abspath(input_file))
+    mod_path = os.path.join(abs_path, "smack")
+    if not os.path.exists(mod_path):
+      os.mkdir(mod_path)
+      link_target = os.path.join(mod_path, "mod.rs")
+      if not os.path.exists(link_target):
+        rust_macros = os.path.join(smack_lib(), 'smack.rs')
+        os.symlink(rust_macros, link_target)
+  except:
+    raise RuntimeError("Could not find or create smack module.")
+
+  return compile_to_bc(input_file,compile_command,args)
+
 # Build libs functions here
 
 def default_build_libs(args):
   """Generate LLVM bitcodes for SMACK libraries."""
   bitcodes = []
-  libs = ['smack.c']
+  libs = ['smack.c', 'stdlib.c']
 
   if args.pthread:
     libs += ['pthread.c']
