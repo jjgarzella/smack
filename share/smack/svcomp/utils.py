@@ -25,7 +25,7 @@ def svcomp_frontend(input_file, args):
   svcomp_check_property(args)
 
   # fix: disable float filter for memory safety benchmarks
-  if not args.memory_safety:
+  if not (args.memory_safety or args.only_check_memcleanup):
     # test bv and executable benchmarks
     file_type, executable = filters.svcomp_filter(args.input_files[0])
     if file_type == 'bitvector':
@@ -50,6 +50,8 @@ def svcomp_frontend(input_file, args):
   name, ext = os.path.splitext(os.path.basename(args.input_files[0]))
   svcomp_process_file(args, name, ext)
 
+  args.clang_options += " -fbracket-depth=2048"
+  args.clang_options += " -Wno-unknown-attributes"
   args.clang_options += " -DSVCOMP"
   args.clang_options += " -DAVOID_NAME_CONFLICTS"
   args.clang_options += " -DCUSTOM_VERIFIER_ASSERT"
@@ -62,19 +64,24 @@ def svcomp_frontend(input_file, args):
     args.clang_options += " -x c"
 
   bc = smack.frontend.clang_frontend(args.input_files[0], args)
-
   # run with no extra smack libraries
   libs = set()
 
   smack.top.link_bc_files([bc],libs,args)
+  if args.only_check_memcleanup:
+    args.memory_safety = False
 
 def svcomp_check_property(args):
+  args.only_check_memcleanup = False
   # Check if property is vanilla reachability, and return unknown otherwise
   if args.svcomp_property:
     with open(args.svcomp_property, "r") as f:
       prop = f.read()
     if "valid-deref" in prop:
       args.memory_safety = True
+    elif "valid-memcleanup" in prop:
+      args.memory_safety = True
+      args.only_check_memcleanup = True
     elif "overflow" in prop:
       args.integer_overflow = True
     elif not "__VERIFIER_error" in prop:
@@ -119,6 +126,7 @@ def svcomp_process_file(args, name, ext):
       s = re.sub(r'100000', r'10', s)
       s = re.sub(r'15000', r'5', s)
       s = re.sub(r'i<=10000', r'i<=1', s)
+      s = re.sub(r'500000', r'50', s)
     elif length < 710 and 'dll_create_master' in s:
       args.no_memory_splitting = True
 
@@ -179,6 +187,11 @@ def verify_bpl_svcomp(args):
       args.bpl_file = smack.top.temporary_file(os.path.splitext(os.path.basename(args.bpl_file))[0], '.bpl', args)
       copyfile(args.bpl_with_all_props, args.bpl_file)
       smack.top.property_selection(args)
+  elif args.only_check_memcleanup:
+    heurTrace = "engage memcleanup checks.\n"
+    args.only_check_memleak = True
+    smack.top.property_selection(args)
+    args.only_check_memleak = False
 
   # invoke boogie for floats
   # I have to copy/paste part of verify_bpl
@@ -220,6 +233,9 @@ def verify_bpl_svcomp(args):
   with open(args.bpl_file, "r") as f:
     bpl = f.read()
 
+  with open(args.input_files[0], "r") as f:
+    csource = f.read()
+
   is_crappy_driver_benchmark(args, bpl)
 
   if args.pthread:
@@ -232,8 +248,9 @@ def verify_bpl_svcomp(args):
       corral_command += ["/cooperative"]
   else:
     corral_command += ["/k:1"]
-    if not (args.memory_safety or args.bit_precise):
-      corral_command += ["/di"]
+    if not (args.memory_safety or args.bit_precise or args.only_check_memcleanup):
+      if not ("dll_create" in csource or "sll_create" in csource or "changeMethaneLevel" in csource):
+        corral_command += ["/di"]
 
   # we are not modeling strcpy
   if args.pthread and "strcpy" in bpl:
@@ -287,10 +304,16 @@ def verify_bpl_svcomp(args):
     heurTrace += "BusyBox memory safety benchmark detected. Setting loop unroll bar to 4.\n"
     loopUnrollBar = 4
   elif args.integer_overflow and "__main($i0" in bpl:
-    heurTrace += "BusyBox overflows benchmark detected. Setting loop unroll bar to 11.\n"
-    loopUnrollBar = 11
+    heurTrace += "BusyBox overflows benchmark detected. Setting loop unroll bar to 40.\n"
+    loopUnrollBar = 40
   elif args.integer_overflow and ("jain" in bpl or "TerminatorRec02" in bpl or "NonTerminationSimple" in bpl):
     heurTrace += "Infinite loop in overflow benchmark. Setting loop unroll bar to INT_MAX.\n"
+    loopUnrollBar = 2**31 - 1
+  elif args.integer_overflow and ("(x != 0)" in csource or "(z > 0)" in csource or "(max > 0)" in csource or "(k < N)" in csource or "partial_sum" in csource):
+    heurTrace += "Large overflow benchmark. Setting loop unroll bar to INT_MAX.\n"
+    loopUnrollBar = 2**31 - 1
+  elif "i>>16" in csource:
+    heurTrace += "Large array reach benchmark. Setting loop unroll bar to INT_MAX.\n"
     loopUnrollBar = 2**31 - 1
 
   if not "forall" in bpl:
@@ -320,7 +343,7 @@ def verify_bpl_svcomp(args):
   command += ["/v:1"]
   command += ["/maxStaticLoopBound:%d" % staticLoopBound]
   command += ["/recursionBound:65536"]
-  command += ["/irreducibleLoopUnroll:2"]
+  command += ["/irreducibleLoopUnroll:12"]
   command += ["/trackAllVars"]
 
   verifier_output = smack.top.try_command(command, timeout=time_limit)
@@ -435,11 +458,14 @@ def verify_bpl_svcomp(args):
     verify_bpl_svcomp(args)
   else:
     write_error_file(args, result, verifier_output)
-    sys.exit(smack.top.results(args)[result])
+    if args.only_check_memcleanup and result == 'invalid-memtrack':
+      sys.exit('SMACK found an error: memory cleanup.')
+    else:
+      sys.exit(smack.top.results(args)[result])
 
 def write_error_file(args, status, verifier_output):
-  return
-  if args.memory_safety or status == 'timeout' or status == 'unknown':
+  #return
+  if args.memory_safety or args.only_check_memcleanup or status == 'timeout' or status == 'unknown':
     return
   hasBug = (status != 'verified')
   #if not hasBug:

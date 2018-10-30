@@ -7,6 +7,7 @@
 // operations, and optionally allows for the checking of overflow.
 //
 
+#define DEBUG_TYPE "smack-overflow"
 #include "smack/IntegerOverflowChecker.h"
 #include "smack/Naming.h"
 #include "llvm/IR/Module.h"
@@ -121,8 +122,8 @@ bool IntegerOverflowChecker::runOnModule(Module& m) {
       if (auto ei = dyn_cast<ExtractValueInst>(&*I)) {
         if (auto ci = dyn_cast<CallInst>(ei->getAggregateOperand())) {
           Function* f = ci->getCalledFunction();
-          SmallVectorImpl<StringRef> *info = new SmallVector<StringRef, 3>;
-          if (f && f->hasName() && OVERFLOW_INTRINSICS.match(f->getName().str(), info)
+          SmallVector<StringRef, 4> info;
+          if (f && f->hasName() && OVERFLOW_INTRINSICS.match(f->getName(), &info)
               && ei->getIndices()[0] == 1) {
             /*
              * If ei is an ExtractValueInst whose value flows from an LLVM
@@ -137,13 +138,16 @@ bool IntegerOverflowChecker::runOnModule(Module& m) {
              * - Finally, an assumption about the value of the flag is created
              *   to block erroneous checking of paths after the overflow check.
              */
+            DEBUG(errs() << "Processing intrinsic: " << f->getName().str() << "\n");
+            assert(info.size() == 4 && "Must capture three matched strings.");
+            bool isSigned = (info[1] == "s");
+            std::string op = info[2];
+            int bits = std::stoi(info[3]);
             Instruction* prev = &*std::prev(I);
-            bool isSigned = info->begin()[1].str() == "s";
-            std::string op = info->begin()[2].str();
-            std::string len = info->begin()[3].str();
-            int bits = std::stoi(len);
             Value* eo1 = extendBitWidth(ci->getArgOperand(0), bits, isSigned, &*I);
             Value* eo2 = extendBitWidth(ci->getArgOperand(1), bits, isSigned, &*I);
+            DEBUG(errs() << "Processing operator: " << op << "\n");
+            assert(INSTRUCTION_TABLE.count(op) != 0 && "Operator must be present in our instruction table.");
             BinaryOperator* ai = BinaryOperator::Create(INSTRUCTION_TABLE.at(op), eo1, eo2, "", &*I);
             if (auto pei = dyn_cast_or_null<ExtractValueInst>(prev)) {
               if (ci == dyn_cast<CallInst>(pei->getAggregateOperand())) {
