@@ -35,6 +35,7 @@ BUILD_MONO=0 # mono is typically installed from packages (see below)
 # Support for more programming languages
 INSTALL_OBJECTIVEC=0
 INSTALL_RUST=0
+INSTALL_D=0
 
 # PATHS
 SMACK_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
@@ -381,6 +382,15 @@ if [ ${INSTALL_RUST} -eq 1 ] ; then
   cd ..
   
   puts "Installed Rust"
+fi
+
+if [ ${INSTALL_D} -eq 1 ] ; then
+  puts "Installing D"
+  
+  sudo apt-get -y install snapd
+  sudo snap install --classic --edge ldc2
+
+  puts "Installed D"
 fi
 
 if [ ${INSTALL_Z3} -eq 1 ] ; then
