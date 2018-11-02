@@ -11,6 +11,14 @@ module smack
           integer(c_int), value :: cond
         end subroutine __verifier_assert
       end interface
+
+      interface
+        function __verifier_nondet_int() bind(c, name="__VERIFIER_nondet_int")
+          use, intrinsic :: iso_c_binding, only: c_int
+          implicit none
+          integer(c_int), intent(out), value :: __verifier_nondet_int
+        end function __verifier_nondet_int
+      end interface
   contains
     subroutine assert(cond) 
       use, intrinsic :: iso_c_binding, only: c_int

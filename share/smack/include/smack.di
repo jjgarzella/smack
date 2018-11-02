@@ -3,3 +3,4 @@
 //
 
 extern (C): void __VERIFIER_assert(int);
+extern (C): int __VERIFIER_nondet_int();
