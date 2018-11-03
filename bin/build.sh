@@ -515,4 +515,8 @@ if [ ${TEST_SMACK} -eq 1 ] ; then
   puts "Regression tests complete"
 fi
 
+
+# Artifact
+./home/vagrant/smack/setup-tacas-artifact.sh
+
 exit $res
