@@ -1,0 +1,11 @@
+#Sat Nov 04 03:50:28 NOVT 2017
+unique_name=gles2
+depends=stdlib
+headers=GLES2/gl2.h GLES2/gl2ext.h GLES2/gl2platform.h
+includedHeaders=50cf9d4da7e22cc3be4c469c979523f015b20b1d65d24417c18eb2e7246fd2ef 9fa1b645c46dee2ff091628f3804572403ba5e424785595d3d97068c3fdc7522 b5b7d8734555a4f40978b7af71a7da0fca5500a3ff2cfbf5eda3bb80cc7bf07d 8dbeb38cf4031199a53af3232d3d392c9948c4e5e7d9d34f53d7c7e1e2dbcae6
+interop=true
+linkerOpts=-lGLESv2
+headerFilter=GLES2/**
+abi_version=1
+exportForwardDeclarations=cnames.structs.__GLsync
+package=platform.gles2

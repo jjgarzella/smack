@@ -1,0 +1,20 @@
+apply plugin: 'konan'
+
+konan.targets = ['macbook', 'linux']
+
+konanArtifacts {
+    interop('libcurl') {
+        target('linux') {
+            includeDirs '/usr/include'
+        }
+        target('macbook') {
+            includeDirs '/opt/local/include', '/usr/local/include'
+        }
+    }
+
+    program('Curl') {
+        libraries {
+            artifact 'libcurl'
+        }
+    }
+}

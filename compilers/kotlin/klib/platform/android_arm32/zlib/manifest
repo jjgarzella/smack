@@ -1,0 +1,11 @@
+#Sat Nov 04 03:52:51 NOVT 2017
+unique_name=zlib
+depends=stdlib
+headers=zconf.h zlib.h
+includedHeaders=dd6fc06ec36207bd5af7aa31557553665cc5d294e881a80052a108cff5dd303e ebceab9efa0d906fcc28dabb864ae63d99da8e5efe56e030cb9cb96578622245 0b721fff697c257bb32149aa6815d9ef912af75f2ab00a6a441f2f8379da7383
+interop=true
+linkerOpts=-lz
+headerFilter=**
+abi_version=1
+exportForwardDeclarations=
+package=platform.zlib

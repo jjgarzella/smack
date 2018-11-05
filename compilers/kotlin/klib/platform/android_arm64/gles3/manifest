@@ -1,0 +1,11 @@
+#Sat Nov 04 17:07:58 NOVT 2017
+unique_name=gles3
+depends=stdlib
+headers=GLES3/gl3.h GLES3/gl3ext.h GLES3/gl3platform.h
+includedHeaders=ca56e07304188277be6248a8723ae68a5db44633b8788c06afb42d24e3246dbc 018c3f086a7186b87b472bae8fb03e6c795dce02b95829a286e8a11fb3d8ab5e 5730da902cec04b86f93152a219b379eabbf4eac97387f271fb8141fdfe4c5c5 276e11f6a4d57a9ab7fdf40f1868a67f1873912cd7e6166360cbc20a9808ac6f
+interop=true
+linkerOpts=-lGLESv3
+headerFilter=GLES3/**
+abi_version=1
+exportForwardDeclarations=cnames.structs.__GLsync
+package=platform.gles3

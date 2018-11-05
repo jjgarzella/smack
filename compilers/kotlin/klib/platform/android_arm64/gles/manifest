@@ -1,0 +1,11 @@
+#Sat Nov 04 03:55:06 NOVT 2017
+unique_name=gles
+depends=stdlib
+headers=GLES/gl.h GLES/glext.h GLES/glplatform.h
+includedHeaders=db17471cc869dfdc7243b44d3acbc574d5088d89988c328426a34a3c5388d5ea 03552610f3dd821c020264745d7aa37d760ca68ab44d3c7314b0959a0a24ae8e 9387668316a42ae5fde64543b5d7efbeea705263110ad70c8ecc7327f23e8dee f5bf2b6fa5a900c0e783d467257f73aac5e2665a131841de72487549a499008a
+interop=true
+linkerOpts=-lGLESv1_CM
+headerFilter=GLES/**
+abi_version=1
+exportForwardDeclarations=
+package=platform.gles
