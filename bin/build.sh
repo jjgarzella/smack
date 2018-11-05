@@ -25,17 +25,17 @@ INSTALL_DEPENDENCIES=1
 INSTALL_Z3=1
 BUILD_BOOGIE=1
 BUILD_CORRAL=1
-BUILD_SYMBOOGLIX=1
+BUILD_SYMBOOGLIX=0
 BUILD_LOCKPWN=1
 BUILD_SMACK=1
-TEST_SMACK=1
+TEST_SMACK=0
 BUILD_LLVM=0 # LLVM is typically installed from packages (see below)
 BUILD_MONO=0 # mono is typically installed from packages (see below)
 
 # Support for more programming languages
-INSTALL_OBJECTIVEC=0
-INSTALL_RUST=0
-INSTALL_D=0
+INSTALL_OBJECTIVEC=1
+INSTALL_RUST=1
+INSTALL_D=1
 
 # PATHS
 SMACK_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
@@ -516,7 +516,20 @@ if [ ${TEST_SMACK} -eq 1 ] ; then
 fi
 
 
-# Artifact
-./home/vagrant/smack/setup-tacas-artifact.sh
+# Artifact SETUP
+
+# install necessary binaries and packages
+puts "Copying precompiled compilers into /usr/local/"
+sudo cp -r /home/vagrant/smack/compilers /usr/local
+puts "Finished copying precompiled compilers."
+/home/vagrant/smack/install-kotlin-packages.sh
+
+# append path
+echo "export PATH=\$PATH:/usr/local/compilers/flang/bin:/usr/local/compilers/swift/bin:/usr/local/compilers/kotlin/bin" >> ${SMACKENV} 
+source ${SMACKENV}
+
+# clone the git repo
+cd /home/vagrant/smack
+git clone https://github.com/soarlab/gandalv.git
 
 exit $res
