@@ -530,6 +530,6 @@ source ${SMACKENV}
 
 # clone the git repo
 cd /home/vagrant/smack
-git clone https://github.com/soarlab/gandalv.git
+git clone git://github.com/soarlab/gandalv.git
 
 exit $res
