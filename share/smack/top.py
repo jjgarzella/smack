@@ -176,7 +176,7 @@ def arguments():
     default=['main'], help='specify top-level procedures [default: %(default)s]')
 
   translate_group.add_argument('--back-entry-points', metavar='PROC', nargs='+',
-    default=['main'], help='specify top-level procedures [default: %(default)s]')
+    default=[], help='specify top-level procedures [default: %(default)s]')
 
   translate_group.add_argument('--memory-safety', action='store_true', default=False,
     help='enable memory safety checks')
@@ -359,6 +359,9 @@ def procedure_annotation(name, args):
 
 def annotate_bpl(args):
   """Annotate the Boogie source file with additional metadata."""
+
+  if not args.back_entry_points:
+    args.back_entry_points = args.entry_points
 
   proc_decl = re.compile('procedure\s+([^\s(]*)\s*\(')
 
