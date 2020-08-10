@@ -36,6 +36,7 @@
 #include "smack/IntegerOverflowChecker.h"
 #include "smack/MemorySafetyChecker.h"
 #include "smack/NormalizeLoops.h"
+#include "smack/AnnotateLoopEnds.h"
 #include "smack/RemoveDeadDefs.h"
 #include "smack/SimplifyLibCalls.h"
 #include "smack/SmackModuleGenerator.h"
@@ -168,6 +169,7 @@ int main(int argc, char **argv) {
 
   // pass_manager.add(new llvm::StructRet());
   pass_manager.add(new smack::NormalizeLoops());
+  pass_manager.add(new smack::AnnotateLoopEnds());
   pass_manager.add(new llvm::SimplifyEV());
   pass_manager.add(new llvm::SimplifyIV());
   pass_manager.add(new smack::ExtractContracts());
