@@ -132,7 +132,7 @@ add_library(smackTranslator STATIC
   include/smack/MemorySafetyChecker.h
   include/smack/IntegerOverflowChecker.h
   include/smack/NormalizeLoops.h
-  include/smack/AnnotateLoopEnds.h
+  include/smack/AnnotateLoopExits.h
   include/smack/SplitAggregateValue.h
   include/smack/Prelude.h
   include/smack/SmackWarnings.h
@@ -157,7 +157,7 @@ add_library(smackTranslator STATIC
   lib/smack/MemorySafetyChecker.cpp
   lib/smack/IntegerOverflowChecker.cpp
   lib/smack/NormalizeLoops.cpp
-  lib/smack/AnnotateLoopEnds.cpp
+  lib/smack/AnnotateLoopExits.cpp
   lib/smack/SplitAggregateValue.cpp
   lib/smack/Prelude.cpp
   lib/smack/SmackWarnings.cpp
